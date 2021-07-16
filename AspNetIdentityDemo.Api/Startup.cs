@@ -45,7 +45,11 @@ namespace AspNetIdentityDemo.Api
                 options.Password.RequireLowercase = true;
                 options.Password.RequiredLength = 5;
             }).AddEntityFrameworkStores<ApplicationDbContext>()
+            .AddRoles<IdentityRole>()
+                .AddRoleManager<RoleManager<IdentityRole>>()
                 .AddDefaultTokenProviders();
+
+            
 
             services.AddAuthentication(auth =>
             {

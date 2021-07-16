@@ -11,7 +11,7 @@ namespace AspNetIdentityDemo.Api.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    [Authorize] // Need Auth access
+    //[Authorize] // Need Auth access
     public class WeatherForecastController : ControllerBase
     {
         private static readonly string[] Summaries = new[]
@@ -27,6 +27,7 @@ namespace AspNetIdentityDemo.Api.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "User")] //Only users with the User role can access this 
         public IEnumerable<WeatherForecast> Get()
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier);// get user id from token

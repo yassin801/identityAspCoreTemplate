@@ -32,6 +32,7 @@ namespace AspNetIdentityDemo.Api.Services
     {
 
         private UserManager<IdentityUser> _userManger;
+        private RoleManager<IdentityRole> _roleManager;
         private IConfiguration _configuration;
         private IMailService _mailService; 
         public UserService(UserManager<IdentityUser> userManager, IConfiguration configuration, IMailService mailService) 
@@ -43,6 +44,11 @@ namespace AspNetIdentityDemo.Api.Services
 
         public async Task<UserManagerResponse> RegisterUserAsync(RegisterViewModel model)
         {
+            if (!(await _roleManager.RoleExistsAsync("User")))
+            {
+                await _roleManager.CreateAsync(new IdentityRole("User"));
+            }
+
             if (model == null)
                 throw new NullReferenceException("Reigster Model is null");
 
@@ -74,6 +80,9 @@ namespace AspNetIdentityDemo.Api.Services
                 /*await _mailService.SendEmailAsync(identityUser.Email, "Confirm your email", $"<h1>Welcome to Auth Demo</h1>" +
                     $"<p>Please confirm your email by <a href='{url}'>Clicking here</a></p>");*/ //Configure SendGrid first
 
+                //Add role to user
+                var userFromDb = await _userManger.FindByNameAsync(model.Email);
+                await _userManger.AddToRoleAsync(userFromDb, "User");
 
                 return new UserManagerResponse
                 {
@@ -93,6 +102,7 @@ namespace AspNetIdentityDemo.Api.Services
 
         public async Task<UserManagerResponse> LoginUserAsync(LoginViewModel model)
         {
+            //Get user from IdentityUser
             var user = await _userManger.FindByEmailAsync(model.Email);
 
             if(user == null)
@@ -114,11 +124,18 @@ namespace AspNetIdentityDemo.Api.Services
                 };
 
             // What inside the token
-            var claims = new[]
+            var claims = new List<Claim>
             {
                 new Claim("Email", model.Email), // custom claim
                 new Claim(ClaimTypes.NameIdentifier, user.Id), // predefined claim
             };
+
+            //Add roles to token
+            var roles = await _userManger.GetRolesAsync(user);
+            foreach (var role in roles)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, role));
+            }
 
             // Generate token
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["AuthSettings:Key"]));
