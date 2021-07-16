@@ -3,3 +3,4 @@ This is a ready to use project with pre-configured JWT Authentication, it also h
 - JWT generation and validation
 - Send verification Email
 - Reset password
+- Roles management
